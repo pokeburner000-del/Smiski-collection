@@ -1,1 +1,27 @@
 # Smiski-collection
+# Smiski Tracker
+
+A glow-in-the-dark Smiski collection tracker. Tap a figure to mark it found; progress saves in the browser automatically.
+
+## Files
+- `public/index.html` — the tracker (the whole app)
+- `server.js` — tiny Express server that serves the file
+- `package.json` — tells Railway how to install & start it
+
+## Deploy on Railway
+1. Push these files to a GitHub repo.
+2. Railway → **New Project → Deploy from GitHub repo** → pick this repo.
+3. Railway auto-detects Node, runs `npm install`, then `npm start`.
+4. **Settings → Networking → Generate Domain** to get a public URL.
+5. Send that URL to whoever's using it.
+
+## Run locally (optional)
+```
+npm install
+npm start
+```
+Then open http://localhost:3000
+
+## Notes
+- Data is stored per-browser (localStorage). Each person/device keeps their own collection.
+- Use the in-app **Export / Import** buttons to back up or move a collection between devices.
