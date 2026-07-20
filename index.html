@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smiski Collection — Found & Hiding</title>
+<style>
+  :root{
+    --paper:#eef0e6;        /* daytime wall */
+    --dim:#c9d1b8;          /* unfound figure body */
+    --dim-line:#a9b596;
+    --glow:#cde8a8;         /* found glow */
+    --glow-deep:#8fc25a;
+    --glow-halo:#b6e77e;
+    --ink:#3a4230;
+    --ink-soft:#6c745e;
+    --secret:#d8c48f;       /* secret amber */
+    --secret-deep:#b9922f;
+    --shelf:#d8cbb0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"Nunito","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 70% -10%, #f6f8ee, transparent),
+      var(--paper);
+    color:var(--ink);
+    line-height:1.5;
+    padding:clamp(16px,4vw,40px);
+    min-height:100vh;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+
+  /* ---- header ---- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:700;margin-bottom:10px;
+  }
+  h1{
+    font-size:clamp(2rem,6vw,3.1rem);line-height:1.02;font-weight:800;
+    letter-spacing:-.02em;color:var(--ink);
+  }
+  h1 .glowword{
+    color:var(--glow-deep);
+    text-shadow:0 0 18px var(--glow-halo);
+  }
+  .sub{margin-top:12px;max-width:52ch;color:var(--ink-soft);font-size:.98rem}
+
+  /* ---- overall progress ---- */
+  .overall{
+    margin:26px 0 8px;padding:20px 22px;border-radius:18px;
+    background:#f7f9f0;border:1px solid #dde3cf;
+    display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px;
+  }
+  .bignum{font-size:2.6rem;font-weight:800;line-height:1;color:var(--glow-deep);
+    text-shadow:0 0 16px var(--glow-halo)}
+  .bignum span{font-size:1rem;color:var(--ink-soft);font-weight:700;text-shadow:none}
+  .obar{flex:1 1 240px;min-width:200px}
+  .obar-track{height:12px;border-radius:99px;background:#dde3cf;overflow:hidden}
+  .obar-fill{height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--glow-deep),var(--glow-halo));
+    box-shadow:0 0 12px var(--glow-halo);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .obar-label{margin-top:8px;font-size:.82rem;color:var(--ink-soft);font-weight:600}
+
+  /* ---- controls ---- */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px;align-items:center}
+  .toggle{
+    border:1px solid #cdd5bd;background:#f7f9f0;color:var(--ink);
+    padding:9px 15px;border-radius:99px;font:inherit;font-weight:700;font-size:.86rem;
+    cursor:pointer;transition:.15s;
+  }
+  .toggle:hover{border-color:var(--glow-deep)}
+  .toggle[aria-pressed="true"]{
+    background:var(--glow-deep);color:#fff;border-color:var(--glow-deep);
+    box-shadow:0 0 14px var(--glow-halo);
+  }
+  .spacer{flex:1}
+  .reset{color:var(--ink-soft);background:none;border:none;font:inherit;
+    font-size:.82rem;cursor:pointer;text-decoration:underline;padding:6px}
+  .reset:hover{color:var(--secret-deep)}
+
+  /* ---- series card ---- */
+  .series{
+    margin-top:18px;border:1px solid #dde3cf;border-radius:18px;
+    background:#fbfcf6;overflow:hidden;
+  }
+  .series-head{
+    display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;
+    user-select:none;
+  }
+  .series-head:hover{background:#f4f7ea}
+  .caret{transition:transform .2s;color:var(--ink-soft);font-size:.8rem}
+  .series.collapsed .caret{transform:rotate(-90deg)}
+  .series.collapsed .grid{display:none}
+  .series-title{font-size:1.12rem;font-weight:800;letter-spacing:-.01em}
+  .series-meta{font-size:.76rem;color:var(--ink-soft);font-weight:600;margin-top:2px}
+  .disc{display:inline-block;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+    background:#efe5cf;color:var(--secret-deep);padding:2px 7px;border-radius:6px;
+    font-weight:800;margin-left:8px;vertical-align:middle}
+  .count-pill{
+    margin-left:auto;font-size:.8rem;font-weight:800;color:var(--ink-soft);
+    background:#eef2e2;padding:5px 11px;border-radius:99px;white-space:nowrap;
+  }
+  .count-pill.done{background:var(--glow-deep);color:#fff;box-shadow:0 0 12px var(--glow-halo)}
+
+  .sbar-track{height:5px;background:#e4e9d6}
+  .sbar-fill{height:100%;width:0;background:var(--glow-deep);
+    box-shadow:0 0 8px var(--glow-halo);transition:width .4s}
+
+  /* ---- figure grid ---- */
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:10px;padding:16px 20px 22px;
+  }
+  .fig{
+    display:flex;align-items:flex-start;gap:12px;padding:12px 13px;
+    border:1px solid #e2e7d4;border-radius:13px;background:#fff;
+    cursor:pointer;transition:.18s;position:relative;
+  }
+  .fig:hover{border-color:var(--glow-deep)}
+  .dot{
+    flex:none;width:26px;height:26px;border-radius:50%;margin-top:1px;
+    background:var(--dim);border:2px solid var(--dim-line);
+    display:grid;place-items:center;transition:.2s;position:relative;
+  }
+  /* little smiski face on the dot */
+  .dot::before,.dot::after{content:"";position:absolute;top:9px;width:3px;height:3px;
+    border-radius:50%;background:var(--ink);opacity:.55;transition:.2s}
+  .dot::before{left:6px}.dot::after{right:6px}
+  .fig .name{font-weight:700;font-size:.92rem;line-height:1.25}
+  .fig .desc{font-size:.76rem;color:var(--ink-soft);margin-top:2px}
+
+  .fig.have{background:#f2fadf;border-color:var(--glow)}
+  .fig.have .dot{
+    background:var(--glow);border-color:var(--glow-deep);
+    box-shadow:0 0 14px var(--glow-halo),0 0 4px var(--glow-halo) inset;
+  }
+  .fig.have .dot::before,.fig.have .dot::after{opacity:.85;background:#2f3a1f}
+  .fig.have .name{color:var(--ink)}
+  .check{position:absolute;inset:0;display:grid;place-items:center;opacity:0;
+    color:var(--glow-deep);font-weight:900;font-size:.8rem;transition:.2s}
+
+  /* secret variant */
+  .fig.secret .dot{background:var(--secret);border-color:var(--secret-deep);border-style:dashed}
+  .fig.secret.have{background:#fbf3dd;border-color:var(--secret-deep)}
+  .fig.secret.have .dot{background:var(--secret);border-style:solid;
+    box-shadow:0 0 14px #e7c874}
+  .fig.secret .name::after{content:"?";margin-left:5px;color:var(--secret-deep);font-weight:900}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid #dde3cf;
+    font-size:.78rem;color:var(--ink-soft)}
+  footer b{color:var(--ink)}
+
+  /* ---- owned verification panel ---- */
+  .owned{margin:18px 0 4px;border:1px solid var(--glow-deep);border-radius:18px;
+    background:#f4fadf;overflow:hidden}
+  .owned-head{display:flex;align-items:center;gap:14px;padding:15px 20px;cursor:pointer;user-select:none}
+  .owned-head:hover{background:#edf6d3}
+  .owned-title{font-weight:800;font-size:1.05rem;color:var(--ink)}
+  .owned-sub{font-size:.78rem;color:var(--ink-soft);font-weight:600;margin-top:2px}
+  .owned-caret{margin-left:auto;color:var(--ink-soft);font-size:.8rem;transition:transform .2s}
+  .owned.collapsed .owned-caret{transform:rotate(-90deg)}
+  .owned.collapsed .owned-body{display:none}
+  .owned-body{padding:6px 20px 20px}
+  .owned-series{margin-top:12px}
+  .owned-series h4{font-size:.82rem;font-weight:800;color:var(--glow-deep);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+  .owned-list{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:.82rem;font-weight:700;background:#fff;border:1px solid var(--glow);
+    color:var(--ink);padding:4px 10px;border-radius:99px}
+  .chip.sec{border-color:var(--secret-deep);background:#fbf3dd}
+  .owned-empty{font-size:.85rem;color:var(--ink-soft);font-style:italic;margin-top:10px}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:1fr}
+    .overall{gap:14px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Dreams Inc. · Glow-in-the-dark blind box</div>
+    <h1>The ones you've <span class="glowword">found</span>,<br>and the ones still hiding.</h1>
+    <p class="sub">Tap a figure to mark it found — it lights up. Everything unlit is still out there in a corner somewhere. Your progress saves automatically on this device.</p>
+  </header>
+
+  <div class="overall">
+    <div class="bignum" id="overallNum">0<span> / 0 found</span></div>
+    <div class="obar">
+      <div class="obar-track"><div class="obar-fill" id="overallBar"></div></div>
+      <div class="obar-label" id="overallLabel">Start tapping the ones you own</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="toggle" id="filterNeed" aria-pressed="false">Show only what I need</button>
+    <button class="toggle" id="toggleSecrets" aria-pressed="true">Secrets: on</button>
+    <div class="spacer"></div>
+    <button class="toggle" id="exportBtn">Export</button>
+    <button class="toggle" id="importBtn">Import</button>
+    <button class="reset" id="resetBtn">Reset all</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+
+  <!-- Owned verification panel -->
+  <section class="owned" id="ownedPanel">
+    <div class="owned-head">
+      <div>
+        <div class="owned-title">Owned — verify your input</div>
+        <div class="owned-sub" id="ownedSub"></div>
+      </div>
+      <span class="caret owned-caret">▼</span>
+    </div>
+    <div class="owned-body" id="ownedBody"></div>
+  </section>
+
+  <div id="app"></div>
+
+  <footer>
+    <b>18 core series · 6 standard figures + 1 secret each.</b> Series 2, 3 &amp; 4 are discontinued (harder to find). Secret figures aren't officially named by Dreams — they're marked with a “?” so you can track them as slots to hunt. Names/descriptions from the official Smiski line-up.
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  {key:"living", name:"Living Series", year:"Sep 2018", note:"#1 best-seller", figs:[
+    ["Daydreaming","Gazing into the distance, feeling twilight"],
+    ["Playing","Sitting by the window blowing a flute-like object"],
+    ["Hiding","Shy and modest, tucked away"],
+    ["Nap Time","Feeling lazy"],
+    ["Thinking","Watching you or people on TV"],
+    ["Lifting","Tidying up, helping clean"],
+  ]},
+  {key:"work", name:"@Work Series", year:"Feb 2022", note:"#2 best-seller", figs:[
+    ["Approving","Sincerely complimenting your work"],
+    ["Researching","On a laptop / computer"],
+    ["Presenting","Giving a presentation"],
+    ["Good Idea","A sudden flash of inspiration"],
+    ["On the Road","Hurrying to work"],
+    ["Group Think","Little Smiski thinking in a meeting"],
+  ]},
+  {key:"bed", name:"Bed Series", year:"Jul 2019", note:"#3 best-seller", figs:[
+    ["Before Rest","A relaxing moment before bed"],
+    ["Sleepy","Standing with a favorite pillow"],
+    ["Co-Sleeping","Snuggling next to Chibineruski by the wall"],
+    ["Reading","Reading a book at the bedside"],
+    ["At Sleep","Curled up small in the corner"],
+    ["Fussing","Crying at night — corner got taken"],
+  ]},
+  {key:"exercising", name:"Exercising Series", year:"Jun 2023", figs:[
+    ["Doing Crunches","Working the abs"],
+    ["Aerobics","Doing aerobics"],
+    ["Balance","Little Smiski on a balance ball"],
+    ["Dumbbell","Weight training"],
+    ["Hoop","Hula-hooping"],
+    ["Stretch","Doing stretches"],
+  ]},
+  {key:"moving", name:"Moving Series", year:"Jan 2024", figs:[
+    ["Carrying Ladder","Hauling a ladder"],
+    ["Balancing Boxes","Stacked with packages"],
+    ["Decorating","Carrying a lamp"],
+    ["Teamwork","Little Smiski with a large package"],
+    ["Green Thumb","Carrying a cactus"],
+    ["Falling Down","Tumbling with packages"],
+  ]},
+  {key:"sunday", name:"Sunday Series", year:"Mar 2025", figs:[
+    ["Blowing Bubbles","Soap bubbles"],
+    ["Paper Airplane","Flying a paper plane"],
+    ["Sunbathing","Napping in the sun"],
+    ["Sing-Along","Singing with a guitar"],
+    ["Skateboarding","Riding a skateboard"],
+    ["Gardening","Watering flowers with a can"],
+  ]},
+  {key:"birthday", name:"Birthday Series", year:"Sep 2025", note:"Newest", figs:[
+    ["Giving a Bouquet","Holding out flowers"],
+    ["Wrapped Up","Pretending to be a present"],
+    ["Popping Confetti","Popping a party cracker"],
+    ["Birthday Message","Holding a HAPPY BIRTHDAY banner"],
+    ["Decorating","Little Smiski decorating"],
+    ["Tasting","Sneaking a bite of cake"],
+  ]},
+  {key:"toilet", name:"Toilet Series", year:"Oct 2017", figs:[
+    ["Peek-A-Boo","Peeking from a toilet paper roll"],
+    ["Little (Smelly)","Sensitive to smells"],
+    ["Squatting","Squatting, worried about the back"],
+    ["Helping Out","Helping from the shadows"],
+    ["Resting","Melancholy with dignity"],
+    ["Holding In","Struggling to hold it in"],
+  ]},
+  {key:"bath", name:"Bath Series", year:"Oct 2017", figs:[
+    ["Shampooing","Washing head at the wall"],
+    ["Not Looking","Covering face with both hands"],
+    ["Scrubbing","Washing themselves"],
+    ["With Duck","Holding a rubber duck"],
+    ["Dazed","Relaxing in a warm bath"],
+    ["Looking","Surprised by a new bath scene"],
+  ]},
+  {key:"yoga", name:"Yoga Series", year:"Oct 2019", figs:[
+    ["Lotus Pose","Calming the mind"],
+    ["Twist Pose","Wanting to be more flexible"],
+    ["Shoulderstand Pose","Correcting body distortions"],
+    ["Triangle Pose","Struggling to balance"],
+    ["Tree Pose","Stretching upward"],
+    ["Ship Pose","Aiming for a flatter stomach"],
+  ]},
+  {key:"cheer", name:"Cheer Series", year:"Aug 2020", figs:[
+    ["Marching","Leading the cheer"],
+    ["On Drums","Drumming to cheer"],
+    ["On Your Side","Flashy afro costume"],
+    ["Dancing","Cheering with pom-poms"],
+    ["Little Cheerleading","Tiny Smiski with pom-poms"],
+    ["Cheering","With a megaphone"],
+  ]},
+  {key:"museum", name:"Museum Series", year:"Dec 2020", note:"Art parodies", figs:[
+    ["The Source","Pouring water from a pot"],
+    ["Fujin & Raijin","Making wind and lightning"],
+    ["Bacchus","Drunk and content"],
+    ["Velázquez","Painting with brush & palette"],
+    ["Dali","Melting beside a clock"],
+    ["Pearl Earring","Wearing a pearl earring (Vermeer)"],
+  ]},
+  {key:"dressing", name:"Dressing Series", year:"Nov 2022", figs:[
+    ["Underpants","Putting on pants"],
+    ["Struggling","Head stuck in a sweater"],
+    ["Loose Pants","Pants too big"],
+    ["Putting On Socks","Pulling on socks"],
+    ["Sweater","Wearing a sweater"],
+    ["Tight Pants","Fighting into tight pants"],
+  ]},
+  {key:"hippers", name:"HIPPERS", year:"Oct 2024", note:"Sticks to surfaces", figs:[
+    ["On His Smartphone","Can't put the phone down"],
+    ["Trying to Climb","Wants to climb but can't"],
+    ["Looking Out","Gazing into the distance"],
+    ["Sticking","Stuck to the wall"],
+    ["Dozing","Dozes off anywhere"],
+    ["Upside Down","Loves thrills"],
+  ]},
+  {key:"s1", name:"Series 1", year:"2015", note:"Original", figs:[
+    ["Hugging Knees","Sitting cross-legged, gazing off"],
+    ["Sitting","On an object, looking down sadly"],
+    ["Looking Back","Startled, turning in a corner"],
+    ["Lounging","Scratching while lying down"],
+    ["Hiding","Tucked into corners"],
+    ["Peeking","Peeking from behind objects"],
+  ]},
+  {key:"s2", name:"Series 2", year:"Apr 2016", disc:true, figs:[
+    ["Kneeling","Sitting formally in the corner"],
+    ["Climbing","Active but clumsy"],
+    ["Daydreaming","Spacing out completely"],
+    ["Pushing","Shoving a wall or object"],
+    ["Peeking","Upside-down between the legs"],
+    ["Listening","Curious about the next room"],
+  ]},
+  {key:"s3", name:"Series 3", year:"Oct 2016", disc:true, figs:[
+    ["Bridge","Lost in thought, backbend"],
+    ["Peeking","Calm at heights, peeking down"],
+    ["Climbing","Up a string, can't get down"],
+    ["Little","Hands on the wall with others"],
+    ["Hiding","Under towels, observing"],
+    ["Handstand","Handstands along the wall"],
+  ]},
+  {key:"s4", name:"Series 4", year:"Oct 2016", disc:true, figs:[
+    ["Sneaking","Avoiding being seen"],
+    ["Scared","Wants down but afraid"],
+    ["Relaxing","Legs stretched against the wall"],
+    ["Lazy","Completely relaxed"],
+    ["Stuck","Squished in a narrow space"],
+    ["Defeated","Can't find a favorite corner"],
+  ]},
+];
+
+const STORE_KEY = "smiski_v1";
+
+// Luke's collection, matched by NAME (numbers in the source list were unreliable).
+// "Secret" marks the hidden 7th slot.
+const SEED_NAMES = {
+  s1:["Sitting","Lounging"],
+  living:["Daydreaming","Playing","Nap Time","Thinking"],
+  bed:["At Sleep","Fussing"],
+  yoga:["Twist Pose","Shoulderstand Pose","Triangle Pose","Ship Pose"],
+  cheer:["Marching","On Your Side","Dancing","Little Cheerleading","Cheering"],
+  museum:["The Source","Fujin & Raijin","Bacchus","Velázquez","Dali"],
+  work:["Approving","Researching","Good Idea","On the Road","Group Think"],
+  dressing:["Underpants","Struggling","Loose Pants","Sweater","Tight Pants"],
+  exercising:["Balance","Dumbbell","Hoop"],
+  moving:["Balancing Boxes","Decorating","Secret"],
+  sunday:["Blowing Bubbles","Paper Airplane","Sing-Along","Skateboarding","Gardening"],
+  birthday:["Giving a Bouquet","Wrapped Up","Popping Confetti","Birthday Message","Decorating","Tasting"],
+};
+
+// resolve names -> ids using DATA (falls back to secret slot 99)
+function seedToState(){
+  const s = {};
+  const byKey = Object.fromEntries(DATA.map(d=>[d.key,d]));
+  for(const k in SEED_NAMES){
+    const series = byKey[k]; if(!series) continue;
+    SEED_NAMES[k].forEach(nm=>{
+      if(nm==="Secret"){ s[k+"::99"]=true; return; }
+      const idx = series.figs.findIndex(f=>f[0].toLowerCase()===nm.toLowerCase());
+      if(idx>=0) s[k+"::"+idx]=true;
+      else console.warn("No match for",k,nm);
+    });
+  }
+  return s;
+}
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e){ state = null; }
+if(!state){ state = seedToState(); }
+
+let showNeedOnly = false;
+let showSecrets = true;
+
+const app = document.getElementById("app");
+
+function idFor(sk, i){ return sk+"::"+i; }
+
+function build(){
+  app.innerHTML = "";
+  DATA.forEach(series=>{
+    const card = document.createElement("section");
+    card.className = "series";
+    card.dataset.key = series.key;
+
+    const head = document.createElement("div");
+    head.className = "series-head";
+    head.innerHTML = `
+      <span class="caret">▼</span>
+      <div>
+        <div class="series-title">${series.name}${series.disc?'<span class="disc">Discontinued</span>':''}</div>
+        <div class="series-meta">${series.year}${series.note?' · '+series.note:''}</div>
+      </div>
+      <span class="count-pill" data-count></span>`;
+    head.addEventListener("click", ()=> card.classList.toggle("collapsed"));
+    card.appendChild(head);
+
+    const sbar = document.createElement("div");
+    sbar.className = "sbar-track";
+    sbar.innerHTML = '<div class="sbar-fill" data-sbar></div>';
+    card.appendChild(sbar);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    // 6 standard
+    series.figs.forEach((f,i)=>{
+      grid.appendChild(makeFig(series.key, i, f[0], f[1], false));
+    });
+    // secret slot
+    grid.appendChild(makeFig(series.key, 99, "Secret", "The hidden 7th figure — pose unpublished", true));
+
+    card.appendChild(grid);
+    app.appendChild(card);
+  });
+  refresh();
+}
+
+function makeFig(sk, i, name, desc, secret){
+  const id = idFor(sk,i);
+  const el = document.createElement("div");
+  el.className = "fig" + (secret?" secret":"");
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="dot"><span class="check">✓</span></div>
+    <div><div class="name">${name}</div><div class="desc">${desc}</div></div>`;
+  if(state[id]) el.classList.add("have");
+  el.addEventListener("click", ()=>{
+    state[id] = !state[id];
+    el.classList.toggle("have", !!state[id]);
+    save(); refresh();
+  });
+  return el;
+}
+
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+function refresh(){
+  let totalHave=0, totalAll=0;
+  DATA.forEach(series=>{
+    const card = app.querySelector(`.series[data-key="${series.key}"]`);
+    const slots = [...Array(series.figs.length).keys()].map(i=>idFor(series.key,i));
+    slots.push(idFor(series.key,99)); // secret
+    const all = showSecrets ? slots.length : slots.length-1;
+    let have=0;
+    slots.forEach((id,idx)=>{
+      const isSecret = idx===slots.length-1;
+      if(isSecret && !showSecrets) return;
+      if(state[id]) have++;
+    });
+    totalHave += have; totalAll += all;
+
+    const pill = card.querySelector("[data-count]");
+    if(have===all && all>0){ pill.classList.add("done"); pill.textContent = `Complete · ${have}/${all}`; }
+    else { pill.classList.remove("done"); pill.textContent = `${have} / ${all}`; }
+    card.querySelector("[data-sbar]").style.width = all? (have/all*100)+"%" : "0";
+
+    // secret visibility
+    const secretEl = card.querySelector('.fig.secret');
+    if(secretEl) secretEl.style.display = showSecrets ? "" : "none";
+
+    // need-only filter
+    let visible=0;
+    card.querySelectorAll(".fig").forEach(f=>{
+      if(f.classList.contains("secret") && !showSecrets){ return; }
+      const hide = showNeedOnly && f.classList.contains("have");
+      f.style.display = hide ? "none" : "";
+      if(!hide) visible++;
+    });
+    card.style.display = (showNeedOnly && visible===0) ? "none" : "";
+  });
+
+  document.getElementById("overallNum").innerHTML = `${totalHave}<span> / ${totalAll} found</span>`;
+  const pct = totalAll? (totalHave/totalAll*100):0;
+  document.getElementById("overallBar").style.width = pct+"%";
+  const need = totalAll-totalHave;
+  document.getElementById("overallLabel").textContent =
+    need===0 ? "Every corner accounted for. Full set!" :
+    `${need} still hiding · ${pct.toFixed(0)}% complete`;
+
+  renderOwned();
+}
+
+function renderOwned(){
+  const body = document.getElementById("ownedBody");
+  const sub = document.getElementById("ownedSub");
+  body.innerHTML = "";
+  let count=0, seriesCount=0;
+  DATA.forEach(series=>{
+    const owned=[];
+    series.figs.forEach((f,i)=>{ if(state[idFor(series.key,i)]) owned.push({name:f[0],sec:false}); });
+    if(state[idFor(series.key,99)]) owned.push({name:"Secret",sec:true});
+    if(owned.length===0) return;
+    seriesCount++; count+=owned.length;
+    const block=document.createElement("div");
+    block.className="owned-series";
+    const chips=owned.map(o=>`<span class="chip${o.sec?' sec':''}">${o.name}${o.sec?' ?':''}</span>`).join("");
+    block.innerHTML=`<h4>${series.name} <span style="color:var(--ink-soft);font-weight:600">· ${owned.length}</span></h4>
+      <div class="owned-list">${chips}</div>`;
+    body.appendChild(block);
+  });
+  if(count===0){ body.innerHTML='<div class="owned-empty">Nothing marked yet. Tap figures below to add them here.</div>'; }
+  sub.textContent = `${count} figure${count!==1?'s':''} across ${seriesCount} series`;
+}
+
+document.getElementById("filterNeed").addEventListener("click", e=>{
+  showNeedOnly = !showNeedOnly;
+  e.target.setAttribute("aria-pressed", showNeedOnly);
+  e.target.textContent = showNeedOnly ? "Showing gaps only" : "Show only what I need";
+  refresh();
+});
+document.getElementById("toggleSecrets").addEventListener("click", e=>{
+  showSecrets = !showSecrets;
+  e.target.setAttribute("aria-pressed", showSecrets);
+  e.target.textContent = showSecrets ? "Secrets: on" : "Secrets: off";
+  refresh();
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Clear every mark and start fresh?")){
+    state={}; save();
+    app.querySelectorAll(".fig.have").forEach(f=>f.classList.remove("have"));
+    refresh();
+  }
+});
+
+// owned panel collapse
+document.querySelector("#ownedPanel .owned-head").addEventListener("click", ()=>{
+  document.getElementById("ownedPanel").classList.toggle("collapsed");
+});
+
+// ---- Export: download current collection as a .json file ----
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const payload = { app:"smiski-tracker", version:1, savedAt:new Date().toISOString(), state };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `smiski-collection-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// ---- Import: load a previously exported .json ----
+const importFile = document.getElementById("importFile");
+document.getElementById("importBtn").addEventListener("click", ()=> importFile.click());
+importFile.addEventListener("change", e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      const incoming = parsed && parsed.state ? parsed.state : parsed; // accept raw or wrapped
+      if(typeof incoming!=="object" || incoming===null) throw new Error("bad shape");
+      if(!confirm("Replace your current marks with the imported collection?")) return;
+      state = incoming; save();
+      app.querySelectorAll(".fig").forEach(f=>{
+        f.classList.toggle("have", !!state[f.dataset.id]);
+      });
+      refresh();
+      alert("Collection imported.");
+    }catch(err){
+      alert("That file didn't look like a Smiski export. Pick a .json you exported from this tracker.");
+    }
+  };
+  reader.readAsText(file);
+  importFile.value = ""; // allow re-importing the same file later
+});
+
+build();
+</script>
+</body>
+</html>
